@@ -31,7 +31,7 @@ function App() {
     
     Amplify.configure({      
       Auth: {
-        identityPoolId: "us-east-1_lDGACWtDp",
+        identityPoolId: "IDENTITY_POOL",
         userPoolWebClientId: 'jgnrn664ie0saa5a2hdega031',
         region: "us-east-1",
         userPoolId: "us-east-1_lDGACWtDp",
