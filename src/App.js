@@ -32,9 +32,9 @@ function App() {
     Amplify.configure({      
       Auth: {
         identityPoolId: "IDENTITY_POOL",
-        userPoolWebClientId: 'jgnrn664ie0saa5a2hdega031',
+        userPoolWebClientId: 'USER_POOL',
         region: "us-east-1",
-        userPoolId: "us-east-1_lDGACWtDp",
+        userPoolId: "IDENTITY_POOL",
       },
     });
   },[]);
