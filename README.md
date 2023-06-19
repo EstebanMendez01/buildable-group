@@ -6,3 +6,6 @@
 |----------|----------|----------|------------|
 | ✔️    | ✔️   | ➗  |  ❌  |
 | ✔️    | ✔️   | ➗  |  ❌  |
+
+
+*Still not been deployed to the public as it is missing features and need to be finished for final product production.*
