@@ -1,113 +1,115 @@
 import './App.css';
 import { Amplify, Auth } from 'aws-amplify';
 import { useEffect, useReducer } from 'react';
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, FormControl, FormLabel, Input, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, Typography } from '@mui/material';
 import LoginForm from './loginForm';
 import SignupForm from './signupForm';
 import ConfirmCodeForm from './confirmCode';
 import Main from './Main';
 import { token } from './token';
 
+// Configure Amplify with environment variables
+Amplify.configure({
+  Auth: {
+    identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL,
+    userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOL_WEB_CLIENT_ID,
+    region: process.env.REACT_APP_AWS_REGION,
+    userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
+  },
+});
 
 function App() {
-
-  const [state, updateState] = useReducer((state, params) => {
-    return {...state, ...params}
-  },{
-    username: '',
-    password: '',
-    email: '',
-    isLogin: true,
-    isEnterCode: false,
-    error: null,
-    loading: false,
-    isLoggedIn: false,
-    code: null,
-    user: null
-  });
+  const [state, updateState] = useReducer(
+    (state, params) => {
+      return { ...state, ...params };
+    },
+    {
+      username: '',
+      password: '',
+      email: '',
+      isLogin: true,
+      isEnterCode: false,
+      error: null,
+      loading: false,
+      isLoggedIn: false,
+      code: null,
+      user: null,
+    }
+  );
 
   useEffect(() => {
-    //const currentConfig = Auth.configure();
-    
-    Amplify.configure({      
+    Amplify.configure({
       Auth: {
-        identityPoolId: "IDENTITY_POOL",
-        userPoolWebClientId: 'USER_POOL',
-        region: "us-east-1",
-        userPoolId: "IDENTITY_POOL",
+        identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL,
+        userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOL_WEB_CLIENT_ID,
+        region: process.env.REACT_APP_AWS_REGION,
+        userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
       },
     });
-  },[]);
+  }, []);
 
-  const handleSignin= async () => {
+  const handleSignin = async () => {
     try {
-      updateState({loading: true});
-      const user = await Auth.signIn({        
+      updateState({ loading: true });
+      const user = await Auth.signIn({
         username: state.username,
         password: state.password,
       });
-      
-      updateState({user: user, isLoggedIn: true, loading: false});
 
+      updateState({ user: user, isLoggedIn: true, loading: false });
     } catch (error) {
       updateState({ loading: false });
       const { message, name } = error;
 
       console.log(error);
 
-      if (name === "UserNotConfirmedException") {
+      if (name === 'UserNotConfirmedException') {
         updateState({ isEnterCode: true });
       }
 
       updateState({
         error: message,
       });
-
     }
-  }
+  };
 
-  const handleSignup= async () => {
+  const handleSignup = async () => {
     try {
-      updateState({loading: true});
+      updateState({ loading: true });
       const signupResult = await Auth.signUp({
         username: state.username,
         password: state.password,
         attributes: {
-          email: state.email
-        }
+          email: state.email,
+        },
       });
 
-      console.log(signupResult);      
-      
-      if( !signupResult.userConfirmed ) 
-        updateState({user: signupResult.user, loading: false, isEnterCode: true, isLogin: true});
-      else {
-        updateState({loading: false, isLogin: true});
+      console.log(signupResult);
+
+      if (!signupResult.userConfirmed) {
+        updateState({ user: signupResult.user, loading: false, isEnterCode: true, isLogin: true });
+      } else {
+        updateState({ loading: false, isLogin: true });
       }
     } catch (error) {
-      updateState({loading: false});
-      const {message} = error;
-      if( message ) {
+      updateState({ loading: false });
+      const { message } = error;
+      if (message) {
         updateState({
-          error: message
+          error: message,
         });
       }
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const handleConfirmCode = async () => {
     try {
-      updateState({loading: true});
-      
-      const  confirmSignUpResult  = await Auth.confirmSignUp(
-        state.username,   
-        state.code,             
-      );
+      updateState({ loading: true });
 
-      if( confirmSignUpResult )
-        updateState({loading: false, isEnterCode: false});
+      const confirmSignUpResult = await Auth.confirmSignUp(state.username, state.code);
 
+      if (confirmSignUpResult) updateState({ loading: false, isEnterCode: false });
     } catch (error) {
       updateState({ loading: false });
       const { message } = error;
@@ -118,14 +120,14 @@ function App() {
 
       console.log(error);
     }
-  }
+  };
 
   const handleResendCode = async () => {
     try {
-      updateState({loading: true});
+      updateState({ loading: true });
 
-      const resendResult  = await Auth.resendSignUp(state.username);
-      updateState({loading: false});
+      const resendResult = await Auth.resendSignUp(state.username);
+      updateState({ loading: false });
 
       console.log(resendResult);
     } catch (error) {
@@ -138,19 +140,18 @@ function App() {
 
       console.log(error);
     }
-  }
+  };
 
   const handleLogout = () => {
     try {
-      if( state.user ) {
+      if (state.user) {
         state.user.signOut(() => {
           updateState({ isLoggedIn: false, user: null });
         });
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-    
   };
 
   return (
@@ -158,13 +159,13 @@ function App() {
       {state.isLoggedIn ? (
         <Main user={state.user} handleLogout={handleLogout} />
       ) : (
-        <Box display={"flex"} justifyContent="center" alignitems={"center"}>
+        <Box display={'flex'} justifyContent="center" alignitems={'center'}>
           <Card
             elevation={2}
-            display={"flex"}
+            display={'flex'}
             flexdirection="column"
             alignitems="center"
-            sx={{ background: "#fff", width: 400, marginTop: 10 }}
+            sx={{ background: '#fff', width: 400, marginTop: 10 }}
           >
             {state.loading ? (
               <CircularProgress />
@@ -195,26 +196,21 @@ function App() {
                     />
                   )
                 ) : (
-                  <SignupForm
-                    updateState={updateState}
-                    handleSignup={handleSignup}
-                  />
+                  <SignupForm updateState={updateState} handleSignup={handleSignup} />
                 )}
 
-                <Box display={"flex"} sx={{ mt: 2 }}>
+                <Box display={'flex'} sx={{ mt: 2 }}>
                   {state.isLogin ? (
                     <Typography variant="caption">
-                      Don't have an account{" "}
+                      Don't have an account{' '}
                       <Button hidden onClick={() => updateState({ isLogin: false })}>
                         Sign up
                       </Button>
                     </Typography>
                   ) : (
                     <Typography variant="caption">
-                      Already have an account{" "}
-                      <Button onClick={() => updateState({ isLogin: true })}>
-                        Sign in
-                      </Button>
+                      Already have an account{' '}
+                      <Button onClick={() => updateState({ isLogin: true })}>Sign in</Button>
                     </Typography>
                   )}
                 </Box>
