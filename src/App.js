@@ -1,22 +1,11 @@
 import './App.css';
-import { Amplify, Auth } from 'aws-amplify';
+import { Amplify, Auth , Storage} from 'aws-amplify';
 import { useEffect, useReducer } from 'react';
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, Typography } from '@mui/material';
 import LoginForm from './loginForm';
 import SignupForm from './signupForm';
 import ConfirmCodeForm from './confirmCode';
 import Main from './Main';
-import { token } from './token';
-
-// Configure Amplify with environment variables
-Amplify.configure({
-  Auth: {
-    identityPoolId: process.env.REACT_APP_AWS_IDENTITY_POOL,
-    userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOL_WEB_CLIENT_ID,
-    region: process.env.REACT_APP_AWS_REGION,
-    userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
-  },
-});
 
 function App() {
   const [state, updateState] = useReducer(
@@ -37,6 +26,8 @@ function App() {
     }
   );
 
+  Amplify.Logger.LOG_LEVEL = 'DEBUG';
+
   useEffect(() => {
     Amplify.configure({
       Auth: {
@@ -45,6 +36,12 @@ function App() {
         region: process.env.REACT_APP_AWS_REGION,
         userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
       },
+      Storage: {
+        AWSS3: {
+          bucket: 'storage-buildable', //REQUIRED -  Amazon S3 bucket name
+          region: process.env.REACT_APP_AWS_REGION, //OPTIONAL -  Amazon service region
+        }
+      }
     });
   }, []);
 
@@ -56,14 +53,18 @@ function App() {
         password: state.password,
       });
 
-      updateState({ user: user, isLoggedIn: true, loading: false });
+      updateState({
+        user: user,
+        isLoggedIn: true,
+        loading: false,
+      });
     } catch (error) {
       updateState({ loading: false });
       const { message, name } = error;
 
       console.log(error);
 
-      if (name === 'UserNotConfirmedException') {
+      if (name === "UserNotConfirmedException") {
         updateState({ isEnterCode: true });
       }
 
@@ -159,14 +160,8 @@ function App() {
       {state.isLoggedIn ? (
         <Main user={state.user} handleLogout={handleLogout} />
       ) : (
-        <Box display={'flex'} justifyContent="center" alignitems={'center'}>
-          <Card
-            elevation={2}
-            display={'flex'}
-            flexdirection="column"
-            alignitems="center"
-            sx={{ background: '#fff', width: 400, marginTop: 10 }}
-          >
+        <Box display="flex" justifyContent="center" alignItems="center">
+          <Card elevation={2} sx={{ background: "#fff", width: 400, marginTop: 10 }}>
             {state.loading ? (
               <CircularProgress />
             ) : (
@@ -199,17 +194,15 @@ function App() {
                   <SignupForm updateState={updateState} handleSignup={handleSignup} />
                 )}
 
-                <Box display={'flex'} sx={{ mt: 2 }}>
+                <Box display="flex" sx={{ mt: 2 }}>
                   {state.isLogin ? (
                     <Typography variant="caption">
-                      Don't have an account{' '}
-                      <Button hidden onClick={() => updateState({ isLogin: false })}>
-                        Sign up
-                      </Button>
+                      Don't have an account{" "}
+                      <Button onClick={() => updateState({ isLogin: false })}>Sign up</Button>
                     </Typography>
                   ) : (
                     <Typography variant="caption">
-                      Already have an account{' '}
+                      Already have an account{" "}
                       <Button onClick={() => updateState({ isLogin: true })}>Sign in</Button>
                     </Typography>
                   )}
