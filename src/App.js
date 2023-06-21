@@ -1,11 +1,12 @@
 import './App.css';
-import { Amplify, Auth , Storage} from 'aws-amplify';
+import { Amplify, Auth, Storage } from 'aws-amplify';
 import { useEffect, useReducer } from 'react';
 import { Alert, Box, Button, Card, CardContent, CircularProgress, Container, Typography } from '@mui/material';
 import LoginForm from './loginForm';
 import SignupForm from './signupForm';
 import ConfirmCodeForm from './confirmCode';
 import Main from './Main';
+import getCredentials from './token';
 
 function App() {
   const [state, updateState] = useReducer(
@@ -40,8 +41,8 @@ function App() {
         AWSS3: {
           bucket: 'storage-buildable', //REQUIRED -  Amazon S3 bucket name
           region: process.env.REACT_APP_AWS_REGION, //OPTIONAL -  Amazon service region
-        }
-      }
+        },
+      },
     });
   }, []);
 
@@ -64,7 +65,7 @@ function App() {
 
       console.log(error);
 
-      if (name === "UserNotConfirmedException") {
+      if (name === 'UserNotConfirmedException') {
         updateState({ isEnterCode: true });
       }
 
@@ -155,13 +156,27 @@ function App() {
     }
   };
 
+  const uploadFile = async () => {
+    try {
+      const credentials = getCredentials();
+      await Storage.put('myFile.txt', 'Hello, World!', {
+        level: 'private',
+        contentType: 'text/plain',
+        identityId: credentials.identityId,
+      });
+      console.log('File uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
   return (
     <Container>
       {state.isLoggedIn ? (
         <Main user={state.user} handleLogout={handleLogout} />
       ) : (
         <Box display="flex" justifyContent="center" alignItems="center">
-          <Card elevation={2} sx={{ background: "#fff", width: 400, marginTop: 10 }}>
+          <Card elevation={2} sx={{ background: '#fff', width: 400, marginTop: 10 }}>
             {state.loading ? (
               <CircularProgress />
             ) : (
@@ -197,12 +212,12 @@ function App() {
                 <Box display="flex" sx={{ mt: 2 }}>
                   {state.isLogin ? (
                     <Typography variant="caption">
-                      Don't have an account{" "}
+                      Don't have an account{' '}
                       <Button onClick={() => updateState({ isLogin: false })}>Sign up</Button>
                     </Typography>
                   ) : (
                     <Typography variant="caption">
-                      Already have an account{" "}
+                      Already have an account{' '}
                       <Button onClick={() => updateState({ isLogin: true })}>Sign in</Button>
                     </Typography>
                   )}
